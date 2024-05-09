@@ -1,41 +1,37 @@
 node{
-     
-    stage('SCM Checkout'){
-        git credentialsId: 'GIT_CREDENTIALS', url:  'https://github.com/MithunTechnologiesDevOps/spring-boot-mongo-docker.git',branch: 'master'
+    stage("Git clone"){
+        git url: 'https://github.com/rajumanne98/spring-boot-mongo-docker.git',branch: 'master'
+    }   
+     stage("mvn clean package"){
+        def mavenHome =  tool name: "maven 3.9.6", type: "maven"
+        def mavenCMD = "${mavenHome}/bin/mvn"
+        sh "${mavenCMD} clean package"
     }
-    
-    stage(" Maven Clean Package"){
-      def mavenHome =  tool name: "Maven-3.6.1", type: "maven"
-      def mavenCMD = "${mavenHome}/bin/mvn"
-      sh "${mavenCMD} clean package"
-      
-    } 
-    
-    
-    stage('Build Docker Image'){
-        sh 'docker build -t dockerhandson/spring-boot-mongo .'
+     stage("build docker image"){
+         sh 'docker build -t raju18/spring-boot-mongo-docker .'
     }
-    
-    stage('Push Docker Image'){
-        withCredentials([string(credentialsId: 'DOKCER_HUB_PASSWORD', variable: 'DOKCER_HUB_PASSWORD')]) {
-          sh "docker login -u dockerhandson -p ${DOKCER_HUB_PASSWORD}"
-        }
-        sh 'docker push dockerhandson/spring-boot-mongo'
-     }
      
-     stage("Deploy To Kuberates Cluster"){
+     stage("push docker image"){
+         withCredentials([string(credentialsId: 'Docker-Hub-Credentials', variable: 'Docker-Hub-Credentials')]) {
+              sh "docker login -u raju18 -p ${Docker-Hub-Credentials}"
+        }  
+        
+         sh 'docker push raju18/spring-boot-mongo-docker'
+         
+    }
+     /**
+      stage("Deploy To Kuberates Cluster"){
        kubernetesDeploy(
          configs: 'springBootMongo.yml', 
          kubeconfigId: 'KUBERNATES_CONFIG',
          enableConfigSubstitution: true
         )
-     }
-	 
-	  /**
+      } 
+      **/
+      
+    
       stage("Deploy To Kuberates Cluster"){
         sh 'kubectl apply -f springBootMongo.yml'
-      } **/
+      } 
      
 }
-
-
